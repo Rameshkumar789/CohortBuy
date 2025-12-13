@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+:root {
+  /* Light Theme - Professional Indigo + Teal */
+  --primary: #0D9488;
+  /* Teal */
+  --primary-dark: #0F766E;
+  --primary-light: #14B8A6;
+  --accent: #7C3AED;
+  /* Purple accent */
+  --accent-alt: #F59E0B;
+  /* Amber */
+  --background: #FDF6E3;
+  /* Solarized Light */
+  --background-secondary: #F5EFDC;
+  --background-card: #FFFFFF;
+  --foreground: #1E1B4B;
+  /* Deep Indigo */
+  --muted: #64748B;
+  /* Slate */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 50%, #0F766E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Hero gradient - Teal */
+.hero-gradient {
+  background: linear-gradient(135deg, #0D9488 0%, #0F766E 50%, #14B8A6 100%);
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Gradient background sections */
+.bg-gradient-section {
+  background: linear-gradient(180deg, var(--background) 0%, var(--background-secondary) 50%, var(--background) 100%);
+}
+
+/* Mesh gradient background - Light theme */
+.mesh-gradient {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(13, 148, 136, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 80% 60%, rgba(124, 58, 237, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 80%, rgba(13, 148, 136, 0.04) 0%, transparent 50%);
+}
+
+/* Glass card - Warm cream */
+.glass-card {
+  background: #FFFBF5;
+  border: 1px solid rgba(100, 80, 60, 0.1);
+  box-shadow: 0 8px 32px rgba(100, 80, 60, 0.06);
+}
+
+/* Card hover */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(13, 148, 136, 0.1);
+  border-color: rgba(13, 148, 136, 0.25);
+}
+
+/* Button primary */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(13, 148, 136, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(13, 148, 136, 0.4);
+}
+
+/* Glow - Subtle for light theme */
+.glow {
+  box-shadow: 0 4px 20px rgba(13, 148, 136, 0.12);
+}
+
+.glow-strong {
+  box-shadow: 0 8px 40px rgba(13, 148, 136, 0.18);
+}
+
+/* Pulse animation */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 4px 15px rgba(13, 148, 136, 0.25);
+  }
+
+  50% {
+    box-shadow: 0 4px 25px rgba(13, 148, 136, 0.4);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+/* Float animation */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Particle dots - Light theme */
+.dots-pattern {
+  background-image: radial-gradient(rgba(13, 148, 136, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Divider line */
+.divider-glow {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0.2;
+}
