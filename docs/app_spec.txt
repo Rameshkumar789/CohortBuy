@@ -1,0 +1,897 @@
+<project_specification>
+  <project_name>Cohort - Agentic Group Buying Platform</project_name>
+
+  <overview>
+    Build a full-stack group buying platform that aggregates consumer demand into "cohorts" and uses 
+    AI agents to negotiate wholesale deals with suppliers. The platform consists of three main interfaces:
+    (1) Customer side - Chrome extension for product discovery and web dashboard for pool management,
+    (2) Supplier side - Portal for catalog import, inventory management, and order fulfillment,
+    (3) Cohort Super Agent - 24/7 AI orchestrator that mediates between customers and suppliers.
+    
+    The core mechanism is "Dark Pool" commerce: buyers pledge funds (authorization hold) which are only 
+    captured when the cohort target is met and a supplier accepts the deal. Prices are never published 
+    publicly, allowing suppliers to offer wholesale discounts without damaging brand equity.
+  </overview>
+
+  <technology_stack>
+    <frontend>
+      <framework>Next.js 15 (App Router) with React</framework>
+      <styling>Tailwind CSS</styling>
+      <ui_components>Shadcn UI, Framer Motion for animations</ui_components>
+      <state_management>React hooks, Context API, TanStack Query</state_management>
+      <forms>React Hook Form with Zod validation</forms>
+    </frontend>
+    <extension>
+      <framework>Plasmo (React-based Chrome extension framework)</framework>
+      <manifest>Manifest V3</manifest>
+      <styling>Tailwind CSS</styling>
+    </extension>
+    <backend>
+      <database>Supabase (PostgreSQL with pgvector for embeddings)</database>
+      <auth>Supabase Auth (GoTrue)</auth>
+      <api>Supabase Edge Functions (Deno/TypeScript)</api>
+      <realtime>Supabase Realtime (WebSockets)</realtime>
+    </backend>
+    <ai_agents>
+      <runtime>LangGraph (Python) - agent orchestration and state management</runtime>
+      <framework>LangChain - tools, memory, chains integration</framework>
+      <llm>
+        - Gemini 2.0 Flash: Fast agent reasoning, tool calling
+        - Gemini 1.5 Pro: Complex negotiation (long context)
+      </llm>
+      <embeddings>Gemini text-embedding-004 (via Vertex AI or API)</embeddings>
+      <checkpointing>LangGraph PostgresSaver - durable agent state</checkpointing>
+      <deployment>Docker containers on Railway / GCP Cloud Run</deployment>
+    </ai_agents>
+    <backend_api>
+      <framework>FastAPI (Python) - REST APIs for frontend</framework>
+      <database>Supabase (PostgreSQL + pgvector)</database>
+      <auth>Supabase Auth (GoTrue)</auth>
+      <realtime>Supabase Realtime (WebSockets)</realtime>
+      <cache>Redis (optional) - caching, rate limiting</cache>
+    </backend_api>
+    <payments>
+      <provider>Stripe</provider>
+      <features>Manual capture (authorization hold), Stripe Connect for supplier payouts</features>
+    </payments>
+  </technology_stack>
+
+  <monorepo_structure>
+    <apps>
+      <customer_web>apps/customer - Next.js customer dashboard</customer_web>
+      <supplier_web>apps/supplier - Next.js supplier portal</supplier_web>
+      <extension>apps/extension - Plasmo Chrome extension</extension>
+      <agent_service>apps/agent-service - Python LangGraph agents</agent_service>
+    </apps>
+    <packages>
+      <ui>packages/ui - Shared React components</ui>
+      <database>packages/database - Supabase client, types, migrations</database>
+      <shared>packages/shared - Shared TypeScript utilities</shared>
+    </packages>
+  </monorepo_structure>
+
+  <core_features>
+    <!-- ============================================ -->
+    <!-- CUSTOMER SIDE FEATURES                        -->
+    <!-- ============================================ -->
+    <customer_side>
+      <chrome_extension>
+        - Detect product pages on major retailers (Amazon, BestBuy, Walmart, etc.)
+        - Inject "Check Cohort Price" button overlay on retailer price
+        - Scrape product data via JSON-LD (Schema.org) and OpenGraph fallback
+        - Query Global Catalog Agent for product matching
+        - Check for active pools on matched products
+        - Show pool status: "42/50 joined - Join now!" or "Create new pool"
+        - Session sharing with web app (no double login required)
+        - Redirect to web platform for pool join/create flow
+      </chrome_extension>
+
+      <customer_dashboard>
+        - Landing page with invite code gate (early access)
+        - Authentication via Google OAuth / Email magic link
+        - Dashboard showing: My Active Pools, My Orders
+        - Pool browser: View all active pools on platform
+        - Pool detail page: Progress bar, time remaining, join button
+        - Pool creation: From catalog search or direct URL paste
+        - Global Catalog browser: All products available from suppliers
+        - Order tracking: Status, tracking number, delivery info
+        - Settings: Shipping address, payment methods, preferences
+      </customer_dashboard>
+
+      <pool_joining>
+        - Select product variant (color, size) if applicable
+        - Stripe payment form (card authorization hold)
+        - Real-time pool progress updates via WebSocket
+        - Notifications: Pool filled, deal locked, order shipped
+      </pool_joining>
+    </customer_side>
+
+    <!-- ============================================ -->
+    <!-- SUPPLIER SIDE FEATURES                        -->
+    <!-- ============================================ -->
+    <supplier_side>
+      <supplier_onboarding>
+        - Business registration (company name, type, website)
+        - Tax information collection
+        - Stripe Connect onboarding for payouts
+        - Platform admin approval workflow
+        - Welcome tour and setup wizard
+      </supplier_onboarding>
+
+      <catalog_management>
+        - Import methods: CSV upload, manual entry, API sync
+        - Product matching flow: System finds existing catalog matches
+        - Match confirmation: "We found Sony A7IV. Link to this?" Yes/No
+        - Create new product if no match exists
+        - Set supplier-specific: SKU, retail price, wholesale floor price
+        - Inventory management: Stock counts, low stock alerts
+        - Variant support: Colors, sizes, configurations
+        - Bulk update via CSV re-upload
+      </catalog_management>
+
+      <supplier_agent_config>
+        - Mode selection: AUTO | SEMI-AUTO | MANUAL
+        - AUTO mode rules:
+          - Minimum order quantity threshold
+          - Minimum margin percentage
+          - Maximum discount from MSRP percentage
+        - SEMI-AUTO escalation rules:
+          - Escalate if order value exceeds threshold
+          - Escalate if margin below threshold
+          - Always escalate for specific SKUs
+        - Response SLA: Hours to respond before auto-reject
+        - Notification preferences: Email, portal, both
+      </supplier_agent_config>
+
+      <deal_management>
+        - Incoming deal requests dashboard
+        - Deal details: Pool ID, product, quantity, proposed price
+        - Actions: Accept, Counter (propose new price), Reject
+        - Counter-offer flow with negotiation history
+        - Deal timeline and status tracking
+      </deal_management>
+
+      <order_fulfillment>
+        - Confirmed orders list with buyer shipping addresses
+        - Bulk shipping label generation (future)
+        - Upload tracking numbers per order
+        - Order status updates: Processing, Shipped, Delivered
+        - Payout tracking from Stripe Connect
+      </order_fulfillment>
+
+      <supplier_analytics>
+        - Sales dashboard: Revenue, units sold, average margin
+        - Pool participation history
+        - Conversion rate: Offers accepted vs rejected
+        - Inventory turnover metrics
+      </supplier_analytics>
+    </supplier_side>
+
+    <!-- ============================================ -->
+    <!-- COHORT SUPER AGENT FEATURES                   -->
+    <!-- ============================================ -->
+    <cohort_super_agent>
+      <orchestrator>
+        - Runs 24/7 as persistent background service
+        - Monitors all active pools for target completion
+        - Triggers negotiation when pool reaches target quantity
+        - Handles pool expiration and cleanup
+        - Orchestrates payment capture after deal confirmation
+        - Creates orders and notifies all parties
+      </orchestrator>
+
+      <global_catalog_agent>
+        - Utility service shared by all components
+        - Product search: Full-text + semantic (vector) search
+        - Product matching: UPC/GTIN exact match, fuzzy title match, embedding similarity
+        - Supplier lookup: Get all suppliers for a product with inventory/pricing
+        - Product normalization: Use LLM to extract structured data from messy scraped input
+        - Embedding generation for new products
+      </global_catalog_agent>
+
+      <negotiator_agent>
+        - Spawned per-pool when negotiation triggers
+        - Queries Global Catalog Agent for eligible suppliers
+        - Sends RFQ (Request for Quote) to each supplier's agent
+        - Collects and compares offers
+        - Selects best offer based on price and availability
+        - Reports result to Super Agent
+        - Handles multi-round negotiation if needed
+      </negotiator_agent>
+
+      <supplier_agent>
+        - One logical agent per supplier (uses supplier's config)
+        - Receives RFQ from Negotiator Agent
+        - Evaluates against supplier's auto-accept rules
+        - AUTO mode: Immediately accept/reject based on rules
+        - MANUAL mode: Create notification for human review
+        - SEMI-AUTO: Auto-handle within thresholds, escalate edge cases
+        - Returns response: Accept, Counter, Reject
+        - Tracks open negotiations per supplier
+      </supplier_agent>
+    </cohort_super_agent>
+
+    <!-- ============================================ -->
+    <!-- AGENT COMMUNICATION PROTOCOLS                 -->
+    <!-- ============================================ -->
+    <agent_communication>
+      <internal_agents>
+        <!-- Within platform: Temporal workflows + signals -->
+        - Super Agent ↔ Negotiator: Temporal child workflows
+        - Any Agent ↔ Global Catalog: Direct service calls (stateless utility)
+        - Human-in-the-loop: Temporal signals with timeout
+      </internal_agents>
+
+      <negotiation_protocol>
+        <!-- A2A-inspired structured messages for agent negotiation -->
+        RFQ Message Schema:
+        {
+          type: 'RFQ',
+          from: 'negotiator_agent',
+          to: 'supplier_agent',
+          payload: {
+            pool_id, product_id, quantity, target_price, deadline
+          }
+        }
+
+        Response Message Schema:
+        {
+          type: 'RFQ_RESPONSE',
+          from: 'supplier_agent',
+          to: 'negotiator_agent',
+          payload: {
+            decision: 'ACCEPT' | 'COUNTER' | 'REJECT',
+            price?: number,
+            reason?: string,
+            valid_until?: timestamp
+          }
+        }
+      </negotiation_protocol>
+
+      <realtime_updates>
+        - Pool status → Supabase Realtime (WebSocket)
+        - Supplier notifications → Supabase Realtime + Email
+        - Customer alerts → Push notifications / Email
+      </realtime_updates>
+    </agent_communication>
+
+    <!-- ============================================ -->
+    <!-- FUTURE AGENTIC FEATURES (V2/V3)               -->
+    <!-- ============================================ -->
+    <future_agentic_features>
+      <customer_agent phase="V2">
+        <!-- AI agent that serves individual customers -->
+        - Proactive pool suggestions based on browsing/purchase history
+        - "This pool is filling fast, join now?" notifications
+        - Auto-join pools with user permission
+        - Price drop alerts: "Product you watched is now in a pool"
+        - Savings optimization: "Combining these pools saves you $X"
+        - Shopping list → Pool matching
+      </customer_agent>
+
+      <market_intelligence_agent phase="V2">
+        <!-- AI agent that monitors the market proactively -->
+        - Web scraping: Monitor prices across major retailers
+        - Price drop detection: Trigger pool creation automatically
+        - Demand prediction: "High search volume for X, create pool?"
+        - Trend analysis: Identify products with growing interest
+        - Competitor tracking: Monitor other group buying platforms
+        - Supplier opportunity: "Supplier Y has excess inventory of Z"
+      </market_intelligence_agent>
+
+      <advanced_supplier_agent phase="V3">
+        <!-- Deep AI negotiation, not just rules -->
+        - Learning from past deals: "This buyer cohort always pays"
+        - Market context awareness: "Competitor dropped price"
+        - Inventory urgency: "I need to move this stock, accept lower"
+        - Relationship memory: "We've done 5 deals with this platform"
+        - Multi-round negotiation strategy
+        - Explanation generation: "I accepted because..."
+      </advanced_supplier_agent>
+
+      <cross_pool_optimizer phase="V3">
+        <!-- Platform-wide optimization agent -->
+        - Merge similar pools for better pricing
+        - Split large pools across multiple suppliers
+        - Dynamic pricing: Adjust target as pool fills
+        - Demand forecasting for inventory planning
+        - Supplier matching: Route pools to best suppliers
+      </cross_pool_optimizer>
+
+      <conversational_agent phase="V3">
+        <!-- Natural language interface for customers -->
+        - "Find me a deal on a 4K TV under $800"
+        - "What pools are almost full?"
+        - "Join me to the Sony camera pool"
+        - Voice assistant integration (Alexa, Google)
+        - Chat-based pool creation and management
+      </conversational_agent>
+    </future_agentic_features>
+  </core_features>
+
+  <database_schema>
+    <tables>
+      <profiles>
+        - id (UUID, FK to auth.users)
+        - role: 'customer' | 'supplier' | 'admin'
+        - stripe_customer_id (for customers)
+        - shipping_address (JSONB)
+        - preferences (JSONB)
+        - created_at, updated_at
+      </profiles>
+
+      <suppliers>
+        - id (UUID, PK)
+        - user_id (FK to auth.users)
+        - business_name, business_type
+        - website, tax_id
+        - verified_at (NULL = pending approval)
+        - agent_config (JSONB - negotiation mode, rules)
+        - stripe_connect_account_id
+        - created_at, updated_at
+      </suppliers>
+
+      <global_catalog>
+        - id (UUID, PK)
+        - canonical_id (TEXT, UNIQUE - UPC/GTIN if known)
+        - title (TEXT, NOT NULL)
+        - brand (TEXT)
+        - category_path (TEXT[] - hierarchical categories)
+        - variant_axes (TEXT[] - ['color', 'storage'] etc.)
+        - embedding (VECTOR(1536) - for semantic search)
+        - reference_price (NUMERIC - average market price)
+        - image_url (TEXT)
+        - created_at, last_verified_at
+      </global_catalog>
+
+      <product_variants>
+        - id (UUID, PK)
+        - parent_product_id (FK to global_catalog)
+        - variant_values (JSONB - {"color": "Black", "storage": "256GB"})
+        - sku (TEXT)
+        - upc, gtin, mpn (TEXT - product identifiers)
+        - UNIQUE(parent_product_id, variant_values)
+      </product_variants>
+
+      <supplier_catalog>
+        - id (UUID, PK)
+        - supplier_id (FK to suppliers)
+        - variant_id (FK to product_variants)
+        - supplier_sku (TEXT)
+        - price (NUMERIC - retail price)
+        - wholesale_price (NUMERIC - floor price for deals)
+        - inventory_count (INT)
+        - low_stock_threshold (INT)
+        - is_active (BOOLEAN)
+        - last_sync_at (TIMESTAMPTZ)
+        - UNIQUE(supplier_id, variant_id)
+      </supplier_catalog>
+
+      <pools>
+        - id (UUID, PK)
+        - parent_product_id (FK to global_catalog)
+        - variant_id (FK to product_variants, NULL = any variant)
+        - creator_id (FK to auth.users)
+        - target_price (NUMERIC)
+        - target_quantity (INT)
+        - current_quantity (INT, DEFAULT 0)
+        - status: 'FORMING' | 'NEGOTIATING' | 'LOCKED' | 'CAPTURED' | 'FULFILLED' | 'EXPIRED' | 'CANCELLED'
+        - expires_at (TIMESTAMPTZ)
+        - matched_supplier_id (FK to suppliers, after deal)
+        - negotiated_price (NUMERIC, final deal price)
+        - super_agent_thread_id (TEXT - LangGraph thread)
+        - created_at, updated_at
+      </pools>
+
+      <pledges>
+        - id (UUID, PK)
+        - pool_id (FK to pools)
+        - user_id (FK to auth.users)
+        - variant_id (FK to product_variants)
+        - amount_cents (INT)
+        - stripe_payment_intent_id (TEXT)
+        - status: 'PENDING' | 'AUTHORIZED' | 'CAPTURED' | 'VOIDED' | 'REFUNDED'
+        - auth_expires_at (TIMESTAMPTZ - 7 day authorization window)
+        - created_at
+        - UNIQUE(pool_id, user_id)
+      </pledges>
+
+      <orders>
+        - id (UUID, PK)
+        - pool_id (FK to pools)
+        - pledge_id (FK to pledges)
+        - user_id (FK to auth.users)
+        - supplier_id (FK to suppliers)
+        - variant_id (FK to product_variants)
+        - amount_cents (INT)
+        - status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'COMPLETED'
+        - shipping_address (JSONB)
+        - tracking_number, carrier (TEXT)
+        - created_at, shipped_at, delivered_at
+      </orders>
+
+      <negotiations>
+        - id (UUID, PK)
+        - pool_id (FK to pools)
+        - supplier_id (FK to suppliers)
+        - rfq_price (NUMERIC - our asking price)
+        - response_price (NUMERIC - supplier's response)
+        - status: 'PENDING' | 'ACCEPTED' | 'COUNTERED' | 'REJECTED' | 'EXPIRED'
+        - responded_at (TIMESTAMPTZ)
+        - thread_id (TEXT - agent thread for this negotiation)
+        - created_at
+      </negotiations>
+
+      <invite_codes>
+        - code (TEXT, PK)
+        - max_uses (INT)
+        - used_count (INT)
+        - created_by (FK to auth.users)
+        - expires_at (TIMESTAMPTZ)
+      </invite_codes>
+    </tables>
+  </database_schema>
+
+  <api_endpoints>
+    <!-- Customer APIs -->
+    <customer_api>
+      <catalog>
+        - GET /api/catalog/search?q=query - Search global catalog
+        - GET /api/catalog/products/:id - Get product with variants
+        - GET /api/catalog/products/:id/suppliers - Get suppliers for product
+      </catalog>
+      <pools>
+        - GET /api/pools - List all active pools (with filters)
+        - GET /api/pools/:id - Get pool details
+        - POST /api/pools - Create new pool
+        - POST /api/pools/:id/join - Join pool (creates pledge + payment intent)
+        - DELETE /api/pools/:id/leave - Leave pool (cancels authorization)
+      </pools>
+      <pledges>
+        - GET /api/pledges - Get user's pledges
+        - GET /api/pledges/:id - Get pledge details
+      </pledges>
+      <orders>
+        - GET /api/orders - Get user's orders
+        - GET /api/orders/:id - Get order details with tracking
+      </orders>
+      <profile>
+        - GET /api/profile - Get current user profile
+        - PUT /api/profile - Update profile
+        - PUT /api/profile/address - Update shipping address
+      </profile>
+    </customer_api>
+
+    <!-- Supplier APIs -->
+    <supplier_api>
+      <onboarding>
+        - POST /api/supplier/register - Register as supplier
+        - GET /api/supplier/onboarding-status - Check approval status
+      </onboarding>
+      <catalog>
+        - GET /api/supplier/catalog - Get supplier's catalog
+        - POST /api/supplier/catalog/import - Bulk import products
+        - POST /api/supplier/catalog/match - Find matches for product data
+        - POST /api/supplier/catalog/link - Link to existing global catalog item
+        - POST /api/supplier/catalog/create - Create new global catalog item
+        - PUT /api/supplier/catalog/:id - Update supplier catalog entry
+        - DELETE /api/supplier/catalog/:id - Remove from catalog
+        - PUT /api/supplier/catalog/:id/inventory - Update inventory count
+      </catalog>
+      <config>
+        - GET /api/supplier/config - Get agent config
+        - PUT /api/supplier/config - Update agent config
+      </config>
+      <deals>
+        - GET /api/supplier/deals - Get pending deals
+        - GET /api/supplier/deals/:id - Get deal details
+        - POST /api/supplier/deals/:id/accept - Accept deal
+        - POST /api/supplier/deals/:id/counter - Counter with new price
+        - POST /api/supplier/deals/:id/reject - Reject deal
+      </deals>
+      <orders>
+        - GET /api/supplier/orders - Get supplier's orders
+        - GET /api/supplier/orders/:id - Get order details
+        - PUT /api/supplier/orders/:id/ship - Update with tracking
+      </orders>
+      <analytics>
+        - GET /api/supplier/analytics/summary - Overview metrics
+        - GET /api/supplier/analytics/sales - Sales over time
+      </analytics>
+    </supplier_api>
+
+    <!-- Agent Internal APIs -->
+    <agent_api>
+      - POST /api/agent/pool-check - Super Agent checks pool status
+      - POST /api/agent/negotiate - Trigger negotiation for pool
+      - POST /api/agent/rfq - Send RFQ to supplier agent
+      - POST /api/agent/capture - Capture payments for pool
+      - POST /api/webhooks/stripe - Stripe webhook handler
+    </agent_api>
+  </api_endpoints>
+
+  <ui_layout>
+    <customer_web>
+      <layout>
+        - Sidebar: Navigation (Dashboard, Pools, Catalog, Orders, Settings)
+        - Header: Logo, Search, User menu
+        - Main content area
+        - Responsive: Collapsible sidebar on mobile
+      </layout>
+      <pages>
+        - /: Landing page (public)
+        - /login: Authentication
+        - /dashboard: User home
+        - /pools: Pool browser with filters
+        - /pools/[id]: Pool detail + join
+        - /pools/create: Create new pool
+        - /catalog: Browse global catalog
+        - /orders: Order history
+        - /settings: User preferences
+      </pages>
+    </customer_web>
+
+    <supplier_web>
+      <layout>
+        - Sidebar: Navigation (Dashboard, Catalog, Deals, Orders, Settings)
+        - Header: Business name, Notifications, User menu
+        - Main content area
+      </layout>
+      <pages>
+        - /: Landing / Login
+        - /onboarding: Supplier registration wizard
+        - /dashboard: Overview metrics, pending actions
+        - /catalog: Catalog management
+        - /catalog/import: Import wizard
+        - /deals: Pending deal requests
+        - /orders: Order fulfillment
+        - /settings: Agent config, business settings
+      </pages>
+    </supplier_web>
+
+    <chrome_extension>
+      <popup>
+        - Logo and title
+        - Login status / Login button
+        - Current page product info (if detected)
+        - Pool status for current product
+        - Action buttons (Join Pool, Create Pool)
+      </popup>
+      <content_script>
+        - Floating "Check Cohort" badge on product pages
+        - Price comparison overlay
+      </content_script>
+    </chrome_extension>
+  </ui_layout>
+
+  <design_system>
+    <color_palette>
+      - Primary: Indigo-600 (#4F46E5) - Main CTAs
+      - Secondary: Emerald-500 (#10B981) - Success, savings
+      - Background: White (light), Slate-900 (dark)
+      - Surface: Slate-50 (light), Slate-800 (dark)
+      - Text: Slate-900 (light), Slate-100 (dark)
+      - Accent: Amber-500 (#F59E0B) - Highlights, urgency
+      - Error: Red-500 (#EF4444)
+    </color_palette>
+    <typography>
+      - Font family: Inter (Google Fonts)
+      - Headings: font-bold
+      - Body: font-normal, text-base
+      - Small: text-sm, text-slate-500
+    </typography>
+    <components>
+      - Buttons: Rounded-lg, shadow-sm, hover:shadow
+      - Cards: Rounded-xl, border, shadow-sm
+      - Inputs: Rounded-md, border-slate-300, focus:ring-2
+      - Badges: Rounded-full, px-3 py-1
+      - Progress bars: Rounded-full, animated fill
+    </components>
+    <animations>
+      - Page transitions: Fade in (150ms)
+      - Progress updates: Smooth width transitions
+      - Hover effects: Scale 1.02, shadow increase
+      - Loading: Pulse skeleton loaders
+    </animations>
+  </design_system>
+
+  <key_interactions>
+    <pool_join_flow>
+      1. User finds product (via extension or catalog browse)
+      2. User clicks "Join Pool" on pool detail page
+      3. If variants exist, user selects color/size
+      4. Payment form appears (Stripe Elements)
+      5. User enters card, clicks "Pledge $X"
+      6. Backend creates PaymentIntent with manual capture
+      7. Authorization hold placed on card
+      8. User added to pool, count increments
+      9. Real-time update pushed to all pool viewers
+      10. If pool reaches target, negotiation triggers
+    </pool_join_flow>
+
+    <supplier_import_flow>
+      1. Supplier uploads CSV with product data
+      2. System parses CSV, extracts rows
+      3. For each product:
+         a. Global Catalog Agent searches for matches
+         b. If match found: Show to supplier for confirmation
+         c. Supplier confirms match or creates new
+         d. Create supplier_catalog entry with inventory/price
+      4. Import summary shown with success/error counts
+    </supplier_import_flow>
+
+    <negotiation_flow>
+      1. Pool reaches target_quantity
+      2. Super Agent changes pool status to NEGOTIATING
+      3. Negotiator Agent spawned for pool
+      4. Agent queries suppliers with inventory for product
+      5. For each supplier:
+         a. Send RFQ with quantity and target price
+         b. Supplier Agent evaluates against rules
+         c. AUTO: Immediate accept/reject
+         d. MANUAL: Notify supplier, wait for response
+      6. Collect all responses (with timeout)
+      7. Select best offer (lowest price with available inventory)
+      8. Lock deal with winning supplier
+      9. Super Agent captures all payments
+      10. Create orders for each pledge
+      11. Notify customers and supplier
+    </negotiation_flow>
+  </key_interactions>
+
+  <implementation_steps>
+    <step number="1">
+      <title>Project Setup and Database</title>
+      <tasks>
+        - Initialize monorepo with pnpm workspaces
+        - Create Supabase project
+        - Define and run database migrations
+        - Set up shared TypeScript types package
+        - Configure environment variables
+        - Create Supabase client utilities
+      </tasks>
+    </step>
+
+    <step number="2">
+      <title>Customer Authentication and Landing</title>
+      <tasks>
+        - Build landing page with invite code gate
+        - Implement Supabase Auth (Google OAuth + email)
+        - Create auth context and protected routes
+        - Build basic layout with navigation
+        - Implement user profile page
+      </tasks>
+    </step>
+
+    <step number="3">
+      <title>Global Catalog and Product Display</title>
+      <tasks>
+        - Build catalog search API with pgvector
+        - Create product listing page with filters
+        - Build product detail page with variants
+        - Implement search component with debouncing
+        - Add Stripe Elements for payment UI
+      </tasks>
+    </step>
+
+    <step number="4">
+      <title>Pool System (Core Feature)</title>
+      <tasks>
+        - Build pool creation flow
+        - Implement pool joining with Stripe authorization
+        - Create pool detail page with real-time updates
+        - Build pool browser with filters
+        - Implement pledge management (leave pool)
+        - Add Supabase Realtime for live pool updates
+      </tasks>
+    </step>
+
+    <step number="5">
+      <title>Supplier Portal MVP</title>
+      <tasks>
+        - Build supplier registration and onboarding
+        - Create supplier dashboard
+        - Implement catalog import with matching
+        - Build inventory management UI
+        - Create agent configuration page
+        - Build deal response interface (accept/counter/reject)
+      </tasks>
+    </step>
+
+    <step number="6">
+      <title>Chrome Extension</title>
+      <tasks>
+        - Initialize Plasmo project
+        - Implement product page detection
+        - Build JSON-LD/OG scraping
+        - Create session sharing with web app
+        - Build extension popup with pool status
+        - Add content script overlay on retailer sites
+      </tasks>
+    </step>
+
+    <step number="7">
+      <title>AI Agent Service</title>
+      <tasks>
+        - Set up Python LangGraph project
+        - Implement Global Catalog Agent (search/match)
+        - Build Super Agent (pool monitoring)
+        - Create Negotiator Agent (RFQ flow)
+        - Build Supplier Agent (rule evaluation)
+        - Set up agent persistence with checkpointing
+        - Create webhook triggers for agent activation
+      </tasks>
+    </step>
+
+    <step number="8">
+      <title>Payment Orchestration</title>
+      <tasks>
+        - Implement Stripe Connect for suppliers
+        - Build payment capture logic
+        - Create order creation after capture
+        - Implement refund/void flows for failed pools
+        - Set up Stripe webhook handlers
+      </tasks>
+    </step>
+
+    <step number="9">
+      <title>Order Fulfillment</title>
+      <tasks>
+        - Build customer order tracking page
+        - Create supplier order management
+        - Implement tracking number upload
+        - Add order status notifications
+        - Build order history and details
+      </tasks>
+    </step>
+
+    <step number="10">
+      <title>Polish and Production Prep</title>
+      <tasks>
+        - Mobile responsive optimization
+        - Error handling and loading states
+        - Email notifications (pool updates, orders)
+        - Admin dashboard for platform management
+        - Performance optimization
+        - Security review and hardening
+        - Production deployment setup
+      </tasks>
+    </step>
+
+    <!-- ============================================ -->
+    <!-- PHASE 2: ENHANCED AGENTIC FEATURES (V2)       -->
+    <!-- ============================================ -->
+    <step number="11" phase="V2">
+      <title>Customer Intelligence Agent</title>
+      <tasks>
+        - Build user preference learning system
+        - Implement pool recommendation engine
+        - Create proactive notification system
+        - Add "smart join" with user permission settings
+        - Build shopping list → pool matching
+        - Implement savings calculator agent
+      </tasks>
+    </step>
+
+    <step number="12" phase="V2">
+      <title>Market Intelligence Agent</title>
+      <tasks>
+        - Build price monitoring crawler
+        - Implement price drop detection
+        - Create automatic pool creation triggers
+        - Add demand prediction model
+        - Build trend analysis dashboard
+        - Implement competitor tracking
+      </tasks>
+    </step>
+
+    <step number="13" phase="V2">
+      <title>Enhanced Chrome Extension</title>
+      <tasks>
+        - Add AI-powered product recommendations
+        - Implement price history display
+        - Build "best time to buy" predictions
+        - Add social proof ("X people joined today")
+        - Create one-click auto-join feature
+      </tasks>
+    </step>
+
+    <!-- ============================================ -->
+    <!-- PHASE 3: FULL AGENTIC PLATFORM (V3)           -->
+    <!-- ============================================ -->
+    <step number="14" phase="V3">
+      <title>Advanced Supplier Negotiation AI</title>
+      <tasks>
+        - Build supplier deal history learning
+        - Implement market-aware negotiation
+        - Create multi-round strategy engine
+        - Add explanation generation
+        - Build relationship scoring system
+        - Implement dynamic pricing suggestions
+      </tasks>
+    </step>
+
+    <step number="15" phase="V3">
+      <title>Cross-Pool Optimization</title>
+      <tasks>
+        - Build pool merging logic
+        - Implement multi-supplier splitting
+        - Create demand forecasting model
+        - Add dynamic pool target adjustment
+        - Build platform-wide optimization dashboard
+      </tasks>
+    </step>
+
+    <step number="16" phase="V3">
+      <title>Conversational Interface</title>
+      <tasks>
+        - Build natural language query parser
+        - Implement chat-based pool management
+        - Add voice assistant integration
+        - Create mobile chat interface
+        - Build conversational pool creation
+      </tasks>
+    </step>
+
+    <step number="17" phase="V3">
+      <title>External Agent Interoperability</title>
+      <tasks>
+        - Implement A2A protocol support
+        - Allow suppliers to connect their own agents
+        - Build agent authentication/authorization
+        - Create agent marketplace
+        - Add third-party agent certification
+      </tasks>
+    </step>
+  </implementation_steps>
+
+  <agentic_maturity_levels>
+    <level name="V1 - MVP">
+      - Global Catalog Agent (search/match)
+      - Negotiator Agent (RFQ flow, strategy)
+      - Supplier Agent (rule-based + manual modes)
+      - Super Agent (orchestration)
+      Score: 7/10 agentic
+    </level>
+    <level name="V2 - Enhanced">
+      - Customer Agent (recommendations, proactive)
+      - Market Intelligence Agent (monitoring)
+      - Enhanced extension with AI features
+      Score: 8.5/10 agentic
+    </level>
+    <level name="V3 - Full Agentic">
+      - Deep supplier negotiation AI
+      - Cross-pool optimization
+      - Conversational interface
+      - External agent interoperability
+      Score: 10/10 agentic
+    </level>
+  </agentic_maturity_levels>
+
+  <success_criteria>
+    <functionality>
+      - Chrome extension detects products and shows pool status
+      - Customers can join pools with payment authorization
+      - Pool progress updates in real-time
+      - Suppliers can import catalog and configure agent
+      - Negotiation completes automatically when pool fills
+      - Payments captured only after successful deal
+      - Orders created and tracked through fulfillment
+    </functionality>
+    <user_experience>
+      - Clean, modern UI matching design system
+      - Fast page loads and responsive interactions
+      - Clear feedback for all actions
+      - Mobile-friendly responsive design
+      - Intuitive flows for both customers and suppliers
+    </user_experience>
+    <technical_quality>
+      - Type-safe code with TypeScript throughout
+      - Proper error handling and logging
+      - Secure authentication and authorization
+      - Reliable payment processing
+      - Agent reliability with checkpointing
+      - Clean separation between customer/supplier/agent concerns
+    </technical_quality>
+  </success_criteria>
+</project_specification>
