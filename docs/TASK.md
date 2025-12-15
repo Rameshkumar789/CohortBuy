@@ -22,36 +22,37 @@
 - [x] Build basic layout with navigation (sidebar in dashboard)
 - [ ] Implement user profile page
 
-## Step 3: Global Catalog and Product Display
-- [ ] Build catalog search API with pgvector
-- [ ] Create product listing page with filters
-- [ ] Build product detail page with variants
-- [ ] Implement search component with debouncing
-- [ ] Add Stripe Elements for payment UI
+## Step 3: Global Catalog and Product Display ✅
+- [x] Build catalog search API with pgvector
+- [x] Create product listing page with filters
+- [x] Build product detail page with variants
+- [x] Implement search component with debouncing
+- [ ] Add Stripe Elements for payment UI (deferred to Step 4)
 
-## Step 4: Pool System (Core Feature)
-- [ ] Build pool creation flow
-- [ ] Implement pool joining with Stripe authorization
-- [ ] Create pool detail page with real-time updates
-- [ ] Build pool browser with filters
-- [ ] Implement pledge management (leave pool)
-- [ ] Add Supabase Realtime for live pool updates
+## Step 4: Pool System (Core Feature) ✅
+- [x] Build pool creation flow
+- [x] Implement pool joining with Stripe authorization (deferred Stripe)
+- [x] Create pool detail page with real-time updates
+- [x] Build pool browser with filters
+- [x] Implement pledge management (leave pool)
+- [ ] Add Supabase Realtime for live pool updates (optional)
 
-## Step 5: Supplier Portal MVP
-- [ ] Build supplier registration and onboarding
-- [ ] Create supplier dashboard
-- [ ] Implement catalog import with matching
-- [ ] Build inventory management UI
-- [ ] Create agent configuration page
-- [ ] Build deal response interface
+## Step 5: Supplier Portal MVP ✅
+- [x] Build supplier registration and onboarding
+- [x] Create supplier dashboard
+- [x] Implement catalog import with matching
+- [x] Build inventory management UI
+- [x] Create agent configuration page
+- [x] Build deal response interface
+- [x] Admin APIs for supplier approval
 
 ## Step 6: Chrome Extension
-- [ ] Initialize Plasmo project
-- [ ] Implement product page detection
-- [ ] Build JSON-LD/OG scraping
+- [x] Initialize Plasmo project
+- [x] Implement product page detection
+- [x] Build JSON-LD/OG scraping
 - [ ] Create session sharing with web app
-- [ ] Build extension popup with pool status
-- [ ] Add content script overlay on retailer sites
+- [x] Build extension popup with pool status
+- [x] Add content script overlay on retailer sites
 
 ## Step 7: AI Agent Service
 - [ ] Set up Python LangGraph project
@@ -85,21 +86,20 @@
 ---
 
 ## Current Status
-**Last Updated:** 2025-12-13
+**Last Updated:** 2025-12-15
 
 ### ✅ Completed
-- Step 2: Customer Authentication and Landing (Build passing)
-  - Landing page with invite code validation
-  - Login page (Google OAuth + magic link)
-  - Waitlist signup flow
-  - Protected dashboard with sidebar
-  - Auth callback and signout routes
-
-### 🔧 Pending Setup
-1. Run `001_initial_schema.sql` in Supabase SQL Editor
-2. Run `002_seed_catalog.sql` to populate sample products
-3. Configure `.env.local` with Supabase credentials
-4. Configure Google OAuth in Supabase Auth settings
+- Step 2: Customer Authentication and Landing
+- Step 3: Global Catalog and Product Display
+- Step 4: Pool System (Core Feature)
+- Step 5: Supplier Portal MVP
+  - Registration flow (2-step with email verification)
+  - Dashboard with stats
+  - Catalog import (CSV)
+  - Agent configuration (AUTO/SEMI-AUTO/MANUAL)
+  - Deal response UI (Accept/Counter/Reject)
+  - Admin APIs for supplier management
 
 ### 📌 Next Steps
-- Start Step 3: Global Catalog and Product Display
+- Start Step 6: Chrome Extension
+

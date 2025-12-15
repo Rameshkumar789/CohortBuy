@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getUserProfile } from '@/lib/supabase/server';
 import { Users, Package, ShoppingCart, Settings, LogOut, Search, Bell, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import { UserPoolsSection, HotPoolsSection } from '@/components/DashboardPools';
 
 export default async function DashboardPage() {
     const data = await getUserProfile();
@@ -41,11 +42,11 @@ export default async function DashboardPage() {
                         Pools
                     </Link>
                     <Link
-                        href="/catalog"
+                        href="/products"
                         className="flex items-center gap-3 px-4 py-3 rounded-lg text-foreground-muted hover:bg-background-secondary hover:text-foreground transition-colors"
                     >
                         <Package className="w-5 h-5" />
-                        Catalog
+                        Products
                     </Link>
                     <Link
                         href="/orders"
@@ -174,18 +175,7 @@ export default async function DashboardPage() {
                             </Link>
                         </div>
 
-                        <div className="text-center py-12">
-                            <div className="w-16 h-16 rounded-full bg-background-secondary flex items-center justify-center mx-auto mb-4">
-                                <Users className="w-8 h-8 text-foreground-muted" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-foreground mb-2">No active pools</h3>
-                            <p className="text-foreground-muted mb-6">
-                                Join a pool to start saving on premium products.
-                            </p>
-                            <Link href="/catalog" className="btn-primary">
-                                Browse Catalog
-                            </Link>
-                        </div>
+                        <UserPoolsSection />
                     </div>
 
                     {/* Trending Pools Section */}
@@ -197,9 +187,7 @@ export default async function DashboardPage() {
                             </Link>
                         </div>
 
-                        <div className="text-center py-12 text-foreground-muted">
-                            No pools available yet. Check back soon!
-                        </div>
+                        <HotPoolsSection />
                     </div>
                 </div>
             </main>

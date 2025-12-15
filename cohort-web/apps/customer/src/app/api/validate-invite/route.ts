@@ -48,7 +48,7 @@ export async function POST(request: Request) {
         // Check if the code has reached max uses
         if (inviteCode.used_count >= inviteCode.max_uses) {
             return NextResponse.json(
-                { valid: false, message: 'Invite code is invalid' },
+                { valid: false, message: 'Invite code is invalid. Please check with the Team' },
                 { status: 400 }
             );
         }
